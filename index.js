@@ -7,6 +7,9 @@ const database = require("./database");
 //Initialization
 const booky = express();
 
+//configuration--error happens in postman if not defined
+booky.use(express.json());
+
 /*
 Route           /
 Description     Get all books
@@ -195,11 +198,147 @@ booky.get("/publication/book/:isbn", (request, response) =>{
   
   if(getSpecificpubl.length === 0){
       return response.json(
-          {error: `No book found for the isbn value of ${request.params.isbn}`,
+          {error: `No Publication found for the book ${request.params.isbn}`,
          });
   }
-  return response.json({book: getSpecificpubl});
+  return response.json({Publication: getSpecificpubl});
   });
 
+/*
+Route           book/add
+Description     add new book
+Access          Public
+Parameter       none
+Methods         POST
+*/
 
+booky.post("/book/add", (request,response)=>{
+     const {newBook} = request.body;   //const newBook = request.body.newBook  is Destructured to this form
+
+     database.books.push(newBook);  //pushing  NEW BOOK TO THE DATABASE
+
+     return response.json({books: database.books})
+});
+
+/*
+Route           /author/add
+Description     add new author
+Access          Public
+Parameter       none
+Methods         POST
+*/
+
+booky.post("/author/add", (request,response)=>
+{     
+const {newAuthor} = request.body;   
+
+database.author.push(newAuthor);  
+
+return response.json({authors: database.author})
+
+});
+
+/*
+Route           publication/add
+Description     add new publication
+Access          Public
+Parameter       none
+Methods         POST
+*/
+
+booky.post("/publication/add", (request,response)=>
+{     
+const {newPublication} = request.body;   
+
+database.publication.push(newPublication);  
+
+return response.json({Publications: database.publication})
+
+});
+
+/*
+Route           /book/update/title
+Description     Update the book
+Access          Public
+Parameter       isbn
+Methods         Put
+*/
+
+booky.put("/book/update/title/:isbn", (request,response)=>{
+         database.books.forEach((book) => {
+
+             if (book.ISBN === request.params.isbn){
+                 book.title = request.body.newBookTitle;
+                 return;
+             }
+
+         }); 
+         return response.json({books: database.books})
+});
+
+/*
+Route           /book/update/author
+Description     Update/add new author for a book
+Access          Public
+Parameter       isbn,authorId
+Methods         Put
+*/
+
+booky.put("/book/update/author/:isbn/:authorId", (request,response)=> {
+    //update book database
+database.books.forEach((book) => 
+{
+    if(book.ISBN===request.params.isbn){
+       return book.author.push(parseInt(request.params.authorId));
+    }
+});
+    //update author database
+    database.author.forEach((author)=>
+    {
+      if(author.id === parseInt(request.params.authorId))
+         return author.books.push(request.params.isbn);
+    });
+
+    return response.json({books: database.books, author:database.author});
+});
+
+/*
+Route           /book/update/author
+Description     Update the AUTHOR NAME
+Access          Public
+Parameter       authorId
+Methods         Put
+*/
+
+booky.put("/book/update/author/:authorId", (request,response)=>{
+    database.author.forEach((author) => {
+
+        if (author.id === parseInt(request.params.authorId)){
+            author.name = request.body.newAuthorname;
+            return;
+        }
+
+    }); 
+    return response.json({Authors : database.author})
+});
+
+/*
+Route           /book/update/publication
+Description     Update the publication Name
+Access          Public
+Parameter       pubId
+Methods         Put
+*/
+
+booky.put("/book/update/publication/:pubId", (request,response)=>{
+    database.publication.forEach((publication) => {
+
+        if (publication.id === parseInt(request.params.pubId)){
+            publication.name = request.body.newPublicationname;
+            return;
+        }
+
+    }); 
+    return response.json({Publications: database.publication})
+});
 booky.listen(5000, () => console.log("I'm running"));                                                     
