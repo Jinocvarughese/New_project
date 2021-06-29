@@ -345,7 +345,7 @@ booky.put("/book/update/publication/:pubId", (request,response)=>{
 
 /*
 Route           /publication/update/book
-Description     Update the publication Name
+Description     Update/add new book to a publication
 Access          Public
 Parameter       isbn
 Methods         Put
@@ -371,6 +371,126 @@ booky.put("/publication/update/book/:isbn", (request,response) =>{
         publications: database.publication,
         message: "successfully updated publication",
     });
+});
+
+/*
+Route           /book/delete
+Description     delete a book
+Access          Public
+Parameter       isbn
+Methods         Delete
+*/
+
+booky.delete("/book/delete/:isbn", (request,response)=>{
+
+    const updatedBookDatabase = database.books.filter((book)=> 
+    book.ISBN !== request.params.isbn // the books that are not deleted are stored in updatedBookDatabase
+    );
+
+    database.books =  updatedBookDatabase;  //change the database from const to let bcoz we cannot modify it if it is a const
+    return response.json({ books: database.books})
+});
+
+/*
+Route           /book/delete/author
+Description     delete a author from a book
+Access          Public
+Parameter       isbn,author id
+Methods         Delete
+*/
+booky.delete("/book/delete/author/:isbn/:authorId",(request,response)=>
+{
+     //update the book database
+     database.books.forEach((book)=>{
+        if(book.ISBN === request.params.isbn){
+             const newAuthorList = book.author.filter(
+                 (author)=> author !== parseInt(request.params.authorId)
+               );
+             book.author = newAuthorList;
+            return;
+        }
+     });
+
+     //update the author database
+     database.author.forEach((author)=> {
+         if(author.id === parseInt(request.params.authorId)){
+             const newBookList = author.books.filter((book)=> 
+             book!== request.params.isbn
+             );
+
+             author.books = newBookList;
+             return;
+         }
+     });
+     return response.json({
+         book: database.books,
+         author: database.author,
+   });
+});
+
+/*
+Route           author/delete
+Description     delete an author 
+Access          Public
+Parameter       author id
+Methods         Delete
+*/
+
+booky.delete("/author/delete/:authorId", (request,response)=>{
+    const updatedAuthorDatabase = database.author.filter((authors)=> 
+    authors.id !== parseInt(request.params.authorId) 
+    );
+
+    database.author = updatedAuthorDatabase;  
+    return response.json({ Authors: database.author})
+});
+
+/*
+Route           /publication/delete
+Description     delete a publication 
+Access          Public
+Parameter       pubId
+Methods         Delete
+*/
+booky.delete("/publication/delete/:pubId", (request,response)=>{
+    const updatedPublication = database.publication.filter((publications)=> 
+    publications.id !== parseInt(request.params.pubId) 
+    );
+
+    database.publication = updatedPublication;  
+    return response.json({ Publications: database.publication})
+});
+
+/*
+Route           /publication/delete/book
+Description     delete a book from publication 
+Access          Public
+Parameter       isbn,pubId
+Methods         Delete
+*/
+booky.delete("/publication/delete/book/:isbn/:pubId", (request,response)=>{
+    //update publication database
+    database.publication.forEach((publications)=>{
+        if(publications.id === parseInt(request.params.pubId)){
+            const newBookList = publications.books.filter((book)=>
+            book !== request.params.isbn
+            );
+
+            publications.books = newBookList;
+            return;
+        }
+    });
+
+    //update book database
+    database.books.forEach((book)=>{
+        if(book.ISBN === request.params.isbn){
+            book.publications = 0; //no publication available
+            return;
+        }
+    });
+     return response.json({
+         books: database.books, 
+         publication: database.publication})
 });
 
 booky.listen(5000, () => console.log("I'm running")); 

@@ -1,15 +1,15 @@
-const books = [{
+let books = [{
     ISBN: "123Book",
     title: "futher apart",
     pubDate: "2050-01-01",
     language: "eng",
     numPage: 200,
-    publications: [1],
+    publications: 1,
     author: [1, 2],  //we are giving the id of the author
     category: ["mystery","sci-fi"],
 }];
 
-const author = [{
+let author = [{
     id: 1,
     name: "jin",
     books: ["123Book"],
