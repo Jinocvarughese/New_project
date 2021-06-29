@@ -341,4 +341,36 @@ booky.put("/book/update/publication/:pubId", (request,response)=>{
     }); 
     return response.json({Publications: database.publication})
 });
-booky.listen(5000, () => console.log("I'm running"));                                                     
+  
+
+/*
+Route           /publication/update/book
+Description     Update the publication Name
+Access          Public
+Parameter       isbn
+Methods         Put
+*/
+
+booky.put("/publication/update/book/:isbn", (request,response) =>{
+    //update the publication database
+    database.publication.forEach((publication)=>{
+      if(publication.id === request.body.pubId) {
+         return publication.books.push(request.params.isbn); //return is imp
+      }
+    });
+
+    //update the book database
+    database.books.forEach((book)=> {
+        if(book.ISBN === request.params.isbn){
+            book.publication = request.body.pubId;
+            return;
+        }
+    });
+    return response.json({
+        books: database.books,
+        publications: database.publication,
+        message: "successfully updated publication",
+    });
+});
+
+booky.listen(5000, () => console.log("I'm running")); 

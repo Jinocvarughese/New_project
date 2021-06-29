@@ -27,7 +27,7 @@ const publication = [
 {
     id: 1,
     name: "we do",
-    books: ["123Book"],
+    books: [],
 
 },
 {
