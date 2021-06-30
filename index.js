@@ -1,5 +1,7 @@
-const { request, response } = require("express");
+require("dotenv").config();
+
 const express = require ("express");
+const mongoose = require("mongoose");
 
 // Importing the DB 
 const database = require("./database");
@@ -9,6 +11,19 @@ const booky = express();
 
 //configuration--error happens in postman if not defined
 booky.use(express.json());
+
+//establish database connection
+
+mongoose
+.connect( process.env.MONGO_URL, 
+ {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true
+ }
+)
+.then(()=> console.log("Connection Established!"));
 
 /*
 Route           /
@@ -484,7 +499,7 @@ booky.delete("/publication/delete/book/:isbn/:pubId", (request,response)=>{
     //update book database
     database.books.forEach((book)=>{
         if(book.ISBN === request.params.isbn){
-            book.publications = 0; //no publication available
+            book.publications = 0; // no publication available
             return;
         }
     });
