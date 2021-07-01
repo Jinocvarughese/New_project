@@ -7,9 +7,9 @@ const mongoose = require("mongoose");
 const database = require("./database");
 
 //Models
-const BookModels = require("./book");
-const AuthorModels = require("./author");
-const PublicationModels = require("./publication");
+const BookModel = require("./book");
+const AuthorModel = require("./author");
+const PublicationModel = require("./publication");
 
 //Initialization
 const booky = express();
@@ -38,8 +38,9 @@ Parameter       None
 Methods         GET
 */
 
-booky.get("/", (request,response) => {
-    return response.json({books: database.books});  
+booky.get("/", async (request,response) => {
+    const getAllBooks = await BookModel.find();
+    return response.json({books: getAllBooks});  
 });
 
 /*
@@ -50,13 +51,11 @@ Parameter       isbn
 Methods         GET
 */
 
-booky.get("/is/:isbn", (request,response) => {
-    const getSpecificbook = database.books.filter(
-        (book) => book.ISBN === request.params.isbn
-    );
+booky.get("/is/:isbn",  async (request,response) => {
 
+const getSpecificbook = await BookModel.findOne({ISBN: request.params.isbn});
 
-     if(getSpecificbook.length === 0){
+     if(!getSpecificbook){   //converting false to true & true to false
          return response.json(
              {error: `No book found for the ISBN of ${request.params.isbn}`,
             });
@@ -72,13 +71,13 @@ Parameter       category
 Methods         GET
 */
 
-booky.get("/c/:category", (request, response) =>{
-  const getSpecificbook = database.books.filter(
-      (book) => 
-      book.category.includes(request.params.category)     //comparing each element
-      );
-
-if(getSpecificbook.length === 0){
+booky.get("/c/:category", async (request, response) =>{
+  
+  const getSpecificbook = await BookModel.findOne({
+      category: request.params.category,
+})
+  
+if(!getSpecificbook){
     return response.json(
         {error: `No book found for the category of ${request.params.category}`,
        });
@@ -93,15 +92,15 @@ Access          Public
 Parameter       language
 Methods         GET
 */
-booky.get("/lan/:language", (request,response) => {
-    const getSpecificbook = database.books.filter(
-        (book) => book.language === request.params.language
-    );
+booky.get("/lan/:language", async(request,response) => {
+   
+    const getSpecificbook = await BookModel.findOne({
+        language: request.params.language,
+  })
 
-
-     if(getSpecificbook.length === 0){
+     if(!getSpecificbook){
          return response.json(
-             {error: `No book found for the language of ${request.params.lan}`,
+             {error: `No book found for the language of ${request.params.language}`,
             });
      }
      return response.json({book: getSpecificbook});
@@ -116,9 +115,10 @@ Parameter       none
 Methods         GET
 */
 
-booky.get("/author", (request,response) =>
+booky.get("/author", async (request,response) =>
 {
-    return response.json ({ authors: database.author});
+    const getAllAuthors = await AuthorModel.find();
+    return response.json ({ authors: getAllAuthors});
 });
 
 /*
@@ -128,13 +128,12 @@ Access          Public
 Parameter       id
 Methods         GET
 */
-booky.get("/author/id/:id", (request,response) => {
-    const getSpecificauthor = database.author.filter(
-        (author) => author.id === parseInt(request.params.id)
-    );
+booky.get("/author/id/:id", async(request,response) => {
+    const getSpecificauthor = await AuthorModel.findOne({
+        id: request.params.id,
+  })
 
-
-     if(getSpecificauthor.length === 0){
+     if(!getSpecificauthor){
          return response.json(
              {error: `No author of id ${request.params.id} is found`,
             });
@@ -152,14 +151,13 @@ Parameter       isbn
 Methods         GET
 */
 
-booky.get("/author/book/:isbn",(request,response) => {
+booky.get("/author/book/:isbn",async (request,response) => {
 
-    const getSpecificauthor = database.author.filter(
-        (author) => 
-        author.books.includes(request.params.isbn)     //comparing each element
-        );
+    const getSpecificauthor = await AuthorModel.find({
+        books: request.params.isbn,
+  })
   
-  if(getSpecificauthor.length === 0){
+  if(!getSpecificauthor){
       return response.json(
           {error: `No author found for the book of isbn value ${request.params.isbn}`,
          });
@@ -175,9 +173,12 @@ Parameter       none
 Methods         GET
 */
 
-booky.get("/publication" , (request,response) => {
-    return response.json({Publications: database.publication});
-});
+booky.get("/publication" , async(request,response) => 
+    {    
+        const getAllPublishers = await PublicationModel.find();
+        return response.json ({ Publications: getAllPublishers});
+    });
+
 
 /*
 Route           /publication/id
@@ -187,18 +188,17 @@ Parameter       id
 Methods         GET
 */
 
-booky.get("/publication/id/:id", (request,response) => {
-    const getSpecificpubl = database.publication.filter(
-        (anyname) => anyname.id === parseInt(request.params.id)
-    );
+booky.get("/publication/id/:id", async (request,response) => {
+    const getSpecificpubl = await PublicationModel.find({
+        id: request.params.id,
+  })
 
-
-     if(getSpecificpubl.length === 0){
+     if(!getSpecificpubl){
          return response.json(
              {error: `No publivation of id ${request.params.id} is found`,
             });
      }
-     return response.json({author: getSpecificpubl});
+     return response.json({Publications: getSpecificpubl});
 
     });
 
@@ -210,13 +210,12 @@ Parameter       isbn
 Methods         GET
 */
 
-booky.get("/publication/book/:isbn", (request, response) =>{
-    const getSpecificpubl = database.publication.filter(
-        (book) => 
-        book.books.includes(request.params.isbn)     //comparing each element bcoz its an array
-        );
+booky.get("/publication/book/:isbn", async(request, response) =>{
+    const getSpecificpubl = await PublicationModel.find({
+        books: request.params.isbn,
+  })
   
-  if(getSpecificpubl.length === 0){
+  if(!getSpecificpubl){
       return response.json(
           {error: `No Publication found for the book ${request.params.isbn}`,
          });
@@ -232,12 +231,10 @@ Parameter       none
 Methods         POST
 */
 
-booky.post("/book/add", (request,response)=>{
+booky.post("/book/add", async (request,response)=>{
      const {newBook} = request.body;   //const newBook = request.body.newBook  is Destructured to this form
 
-     database.books.push(newBook);  //pushing  NEW BOOK TO THE DATABASE
-
-     return response.json({books: database.books})
+     BookModel.create(newBook);
 });
 
 /*
@@ -248,13 +245,11 @@ Parameter       none
 Methods         POST
 */
 
-booky.post("/author/add", (request,response)=>
+booky.post("/author/add", async(request,response)=>
 {     
 const {newAuthor} = request.body;   
 
-database.author.push(newAuthor);  
-
-return response.json({authors: database.author})
+AuthorModel.create(newAuthor);
 
 });
 
@@ -266,13 +261,11 @@ Parameter       none
 Methods         POST
 */
 
-booky.post("/publication/add", (request,response)=>
+booky.post("/publication/add", async(request,response)=>
 {     
 const {newPublication} = request.body;   
 
-database.publication.push(newPublication);  
-
-return response.json({Publications: database.publication})
+PublicationModel.create(newPublication);
 
 });
 
