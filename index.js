@@ -288,7 +288,7 @@ booky.put("/book/update/title/:isbn", async (request,response)=>{
         title: request.body.newBookTitle
     },
     {
-        new: true,  //to tell the mongodb that it is updated
+        new: true,  //to see the updated booktitle in postman output
     }
 );
          return response.json({books: updatedBook})
@@ -302,22 +302,39 @@ Parameter       isbn,authorId
 Methods         Put
 */
 
-booky.put("/book/update/author/:isbn/:authorId", (request,response)=> {
+booky.put("/book/update/author/:isbn", async (request,response)=> {
+   
     //update book database
-database.books.forEach((book) => 
-{
-    if(book.ISBN===request.params.isbn){
-       return book.author.push(parseInt(request.params.authorId));
-    }
-});
-    //update author database
-    database.author.forEach((author)=>
-    {
-      if(author.id === parseInt(request.params.authorId))
-         return author.books.push(request.params.isbn);
-    });
+  const updatedBook = await BookModel.findOneAndUpdate(
+      {
+          ISBN: request.params.isbn,
+      },
+      {
+        $addToSet: {
+            author: request.body.newAuthor,
+        },
+      },
+      {
+          new: true,
+      }
+  );
 
-    return response.json({books: database.books, author:database.author});
+  //update author database
+  const updatedAuthor = await AuthorModel.findOneAndUpdate(
+      {
+          id: request.body.newAuthor,
+      },
+      {
+          $addToSet:  {
+              books: request.params.isbn,
+          },
+      },
+      {
+          new: true,
+      }
+  );
+
+    return response.json({books: updatedBook, author: updatedAuthor});
 });
 
 /*
