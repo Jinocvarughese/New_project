@@ -277,16 +277,21 @@ Parameter       isbn
 Methods         Put
 */
 
-booky.put("/book/update/title/:isbn", (request,response)=>{
-         database.books.forEach((book) => {
+booky.put("/book/update/title/:isbn", async (request,response)=>{
 
-             if (book.ISBN === request.params.isbn){
-                 book.title = request.body.newBookTitle;
-                 return;
-             }
+  const updatedBook = await BookModel.findOneAndUpdate(
+    {
+      ISBN: request.params.isbn,
+    },
 
-         }); 
-         return response.json({books: database.books})
+    {
+        title: request.body.newBookTitle
+    },
+    {
+        new: true,  //to tell the mongodb that it is updated
+    }
+);
+         return response.json({books: updatedBook})
 });
 
 /*
