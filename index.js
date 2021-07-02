@@ -294,6 +294,59 @@ booky.put("/book/update/title/:isbn", async (request,response)=>{
          return response.json({books: updatedBook})
 });
 
+
+/*
+Route           /book/update/authorname
+Description     Update the AUTHOR NAME
+Access          Public
+Parameter       authorId
+Methods         Put
+*/
+
+booky.put("/book/update/authorname/:authorId", async (request,response)=>{
+   
+    const updatedAuthor = await AuthorModel.findOneAndUpdate(
+        {
+          id: request.params.authorId,
+        },
+    
+        {
+            name: request.body.newAuthorTitle
+        },
+        {
+            new: true,  
+        }
+    );
+
+    return response.json({Authors : updatedAuthor})
+});
+
+/*
+Route           /book/update/publication
+Description     Update the publication Name
+Access          Public
+Parameter       pubId
+Methods         Put
+*/
+
+booky.put("/book/update/publication/:pubId", async(request,response)=>{
+        const updatedPublication = await PublicationModel.findOneAndUpdate(
+            {
+                id: request.params.pubId,
+              },
+          
+              {
+                  name: request.body.newPubTitle
+              },
+              {
+                  new: true,  
+              }
+          );
+        
+
+    return response.json({Publications: updatedPublication})
+});
+  
 /*
 Route           /book/update/author
 Description     Update/add new author for a book
@@ -337,46 +390,6 @@ booky.put("/book/update/author/:isbn", async (request,response)=> {
     return response.json({books: updatedBook, author: updatedAuthor});
 });
 
-/*
-Route           /book/update/author
-Description     Update the AUTHOR NAME
-Access          Public
-Parameter       authorId
-Methods         Put
-*/
-
-booky.put("/book/update/author/:authorId", (request,response)=>{
-    database.author.forEach((author) => {
-
-        if (author.id === parseInt(request.params.authorId)){
-            author.name = request.body.newAuthorname;
-            return;
-        }
-
-    }); 
-    return response.json({Authors : database.author})
-});
-
-/*
-Route           /book/update/publication
-Description     Update the publication Name
-Access          Public
-Parameter       pubId
-Methods         Put
-*/
-
-booky.put("/book/update/publication/:pubId", (request,response)=>{
-    database.publication.forEach((publication) => {
-
-        if (publication.id === parseInt(request.params.pubId)){
-            publication.name = request.body.newPublicationname;
-            return;
-        }
-
-    }); 
-    return response.json({Publications: database.publication})
-});
-  
 
 /*
 Route           /publication/update/book
@@ -386,25 +399,42 @@ Parameter       isbn
 Methods         Put
 */
 
-booky.put("/publication/update/book/:isbn", (request,response) =>{
+booky.put("/publication/update/book/:isbn",async (request,response) =>{
     //update the publication database
-    database.publication.forEach((publication)=>{
-      if(publication.id === request.body.pubId) {
-         return publication.books.push(request.params.isbn); //return is imp
-      }
-    });
+
+    const updatedPublication = await PublicationModel.findOneAndUpdate(
+        {
+            id: request.body.newPublication,
+        },
+        {
+            $addToSet:  {
+                books: request.params.isbn,
+            },
+        },
+        {
+            new: true,
+        }
+    );
+
+  
 
     //update the book database
-    database.books.forEach((book)=> {
-        if(book.ISBN === request.params.isbn){
-            book.publication = request.body.pubId;
-            return;
+    const updatedBook = await BookModel.findOneAndUpdate(
+        {
+            ISBN: request.params.isbn,
+        },
+        {
+          $addToSet: {
+            publications: request.body.newPublication,
+          },
+        },
+        {
+            new: true,
         }
-    });
+    );
     return response.json({
-        books: database.books,
-        publications: database.publication,
-        message: "successfully updated publication",
+        books: updatedBook,
+        publications: updatedPublication,
     });
 });
 
@@ -416,52 +446,16 @@ Parameter       isbn
 Methods         Delete
 */
 
-booky.delete("/book/delete/:isbn", (request,response)=>{
+booky.delete("/book/delete/:isbn", async(request,response)=>{
+    
+    const updatedBookDatabase = await BookModel.findOneAndDelete(
+        {
+            ISBN: request.params.isbn,
+        });
 
-    const updatedBookDatabase = database.books.filter((book)=> 
-    book.ISBN !== request.params.isbn // the books that are not deleted are stored in updatedBookDatabase
-    );
-
-    database.books =  updatedBookDatabase;  //change the database from const to let bcoz we cannot modify it if it is a const
     return response.json({ books: database.books})
 });
 
-/*
-Route           /book/delete/author
-Description     delete a author from a book
-Access          Public
-Parameter       isbn,author id
-Methods         Delete
-*/
-booky.delete("/book/delete/author/:isbn/:authorId",(request,response)=>
-{
-     //update the book database
-     database.books.forEach((book)=>{
-        if(book.ISBN === request.params.isbn){
-             const newAuthorList = book.author.filter(
-                 (author)=> author !== parseInt(request.params.authorId)
-               );
-             book.author = newAuthorList;
-            return;
-        }
-     });
-
-     //update the author database
-     database.author.forEach((author)=> {
-         if(author.id === parseInt(request.params.authorId)){
-             const newBookList = author.books.filter((book)=> 
-             book!== request.params.isbn
-             );
-
-             author.books = newBookList;
-             return;
-         }
-     });
-     return response.json({
-         book: database.books,
-         author: database.author,
-   });
-});
 
 /*
 Route           author/delete
@@ -471,13 +465,13 @@ Parameter       author id
 Methods         Delete
 */
 
-booky.delete("/author/delete/:authorId", (request,response)=>{
-    const updatedAuthorDatabase = database.author.filter((authors)=> 
-    authors.id !== parseInt(request.params.authorId) 
-    );
-
-    database.author = updatedAuthorDatabase;  
-    return response.json({ Authors: database.author})
+booky.delete("/author/delete/:authorId", async (request,response)=>{
+    const updatedAuthorDatabase = await AuthorModel.findOneAndDelete(
+        {
+            id: request.params.authorId,
+        });
+  
+    return response.json({ Authors: updatedAuthorDatabase})
 });
 
 /*
@@ -487,14 +481,60 @@ Access          Public
 Parameter       pubId
 Methods         Delete
 */
-booky.delete("/publication/delete/:pubId", (request,response)=>{
-    const updatedPublication = database.publication.filter((publications)=> 
-    publications.id !== parseInt(request.params.pubId) 
-    );
-
-    database.publication = updatedPublication;  
-    return response.json({ Publications: database.publication})
+booky.delete("/publication/delete/:pubId", async (request,response)=>{
+    const updatedPublication =  await PublicationModel.findOneAndDelete(
+        {
+            id: request.params.pubId,
+        });
+    return response.json({ Publications: updatedPublication})
 });
+
+/*
+Route           /book/delete/author
+Description     delete a author from a book
+Access          Public
+Parameter       isbn,author id
+Methods         Delete
+*/
+booky.delete("/book/delete/author/:isbn/:authorId",async(request,response)=>
+{
+     //update the book database
+    const updatedBook = await  BookModel.findOneAndUpdate(
+    {
+        ISBN: request.params.isbn,
+    },
+    {
+       $pull: {
+           author: parseInt(request.params.authorId),
+       }, 
+    },
+    {
+        new: true,
+    }
+);
+
+
+    const updatedAuthor = await AuthorModel.findOneAndUpdate(
+        {
+            id: parseInt(request.params.authorId),
+        },
+        {
+            $pull: {
+                books: request.params.isbn,
+            },
+        },
+        {
+            new: true,
+        }
+        );
+
+
+     return response.json({
+         book: updatedBook,
+         author: updatedAuthor,
+   });
+});
+
 
 /*
 Route           /publication/delete/book
@@ -503,29 +543,40 @@ Access          Public
 Parameter       isbn,pubId
 Methods         Delete
 */
-booky.delete("/publication/delete/book/:isbn/:pubId", (request,response)=>{
+booky.delete("/publication/delete/book/:isbn/:pubId",async (request,response)=>{
     //update publication database
-    database.publication.forEach((publications)=>{
-        if(publications.id === parseInt(request.params.pubId)){
-            const newBookList = publications.books.filter((book)=>
-            book !== request.params.isbn
-            );
-
-            publications.books = newBookList;
-            return;
+    const updatedPublication = await PublicationModel.findOneAndUpdate(
+        {
+            id: parseInt(request.params.pubId),
+        },
+        {
+            $pull: {
+                books: request.params.isbn,
+            },
+        },
+        {
+            new: true,
         }
-    });
+        );
 
     //update book database
-    database.books.forEach((book)=>{
-        if(book.ISBN === request.params.isbn){
-            book.publications = 0; // no publication available
-            return;
+    const updatedBook = await  BookModel.findOneAndUpdate(
+        {
+            ISBN: request.params.isbn,
+        },
+        {
+           $pull: {
+               author: parseInt(request.params.pubId),
+           }, 
+        },
+        {
+            new: true,
         }
-    });
+    );
+
      return response.json({
-         books: database.books, 
-         publication: database.publication})
+         books: updatedBook , 
+         publication: updatedPublication})
 });
 
 booky.listen(5000, () => console.log("I'm running")); 
