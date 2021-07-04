@@ -99,9 +99,16 @@ Methods         POST
 */
 
 Router.post("/add", async (request,response)=>{
-    const {newBook} = request.body;   //const newBook = request.body.newBook  is Destructured to this form
+    try{
+        const {newBook} = request.body;   //const newBook = request.body.newBook  is Destructured to this form
 
-    BookModel.create(newBook);
+        await BookModel.create(newBook);
+
+        return response.json({message: "book was added"});
+
+    } catch(error){
+        return response.json({ error : error.message});
+    }
 });
 
 
@@ -117,20 +124,21 @@ Methods         Put
 
 Router.put("/update/title/:isbn", async (request,response)=>{
 
-    const updatedBook = await BookModel.findOneAndUpdate(
-      {
-        ISBN: request.params.isbn,
-      },
   
-      {
-          title: request.body.newBookTitle
-      },
-      {
-          new: true,  //to see the updated booktitle in postman output
-      }
-  );
-           return response.json({books: updatedBook})
-  });
+    const updatedBook = await BookModel.findOneAndUpdate(
+        {
+          ISBN: request.params.isbn,
+        },
+    
+        {
+            title: request.body.newBookTitle
+        },
+        {
+            new: true,  //to see the updated booktitle in postman output
+        }
+    );
+             return response.json({books: updatedBook})
+});
 
 
   /*

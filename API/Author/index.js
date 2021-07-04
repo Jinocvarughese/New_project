@@ -37,7 +37,7 @@ Router.get("/id/:id", async(request,response) => {
     });
 
 
-    /*
+/*
 Route           /author/book
 Description     Get all authors based on book
 Access          Public
@@ -60,7 +60,7 @@ Router.get("/book/:isbn",async (request,response) => {
   });
 
 
-  /*
+/*
 Route           /author/add
 Description     add new author
 Access          Public
@@ -69,11 +69,15 @@ Methods         POST
 */
 
 Router.post("/add", async(request,response)=>
-{     
-const {newAuthor} = request.body;   
+{
+  try{    
+   const {newAuthor} = request.body;   
 
-AuthorModel.create(newAuthor);
+   await AuthorModel.create(newAuthor);
 
+} catch(error){
+    return response.json({ error : error.message});
+}
 });
 
 

@@ -75,10 +75,13 @@ Methods         POST
 
 Router.post("/add", async(request,response)=>
 {     
-const {newPublication} = request.body;   
+ try{
+    const {newPublication} = request.body;   
 
-PublicationModel.create(newPublication);
-
+    await PublicationModel.create(newPublication);
+    }catch(error){
+        return response.json({ error : error.message});
+    }
 });
 
 
